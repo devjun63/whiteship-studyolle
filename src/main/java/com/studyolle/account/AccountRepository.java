@@ -6,7 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(readOnly = true) // jpa write lock
 public interface AccountRepository extends JpaRepository<Account, Long> {
-    boolean existsByEmail(String email);// Account class , id
 
-    boolean existsByNickName(String nickname);
+    boolean existsByEmail(String email);    // Account class , id
+
+    boolean existsByNickname(String nickname);
+
 }

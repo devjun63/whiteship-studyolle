@@ -5,10 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -18,6 +24,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AccountControllerTest {
 
     @Autowired private MockMvc mockMvc;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @MockBean
+    JavaMailSender javaMailSender;
 
     @DisplayName("회원 가입 화면 보이는지 테스트")
     @Test   //Junit5
@@ -44,5 +56,36 @@ class AccountControllerTest {
         // 위 어노테이션으로 Servlet을 띄울때는
         // @AutoConfigureWebTestClient or AutoConfigureWebClient을 사용하겠지만
         // Thymeleaf를 사용해서 MockMvcTest로도 충분
+
     }
+
+    @DisplayName("회원 가입 처리 -  입력값 오류")
+    @Test
+    void singUpSubmit_wrong_input() throws Exception {
+        mockMvc.perform(post("/sign-up")
+                .param("nickname", "jungi")
+                .param("email", "email..")
+                .param("password", "12345")
+                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("account/sign-up"));
+    }
+
+    @DisplayName("회원 가입 처리 -  입력값 정상")
+    @Test
+    void singUpSubmit_correct_input() throws Exception {
+        mockMvc.perform(post("/sign-up")
+                .param("nickname", "jungi")
+                .param("email", "jungi@email.com")
+                .param("password", "12345678")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name("redirect:/"));
+
+        assertTrue(accountRepository.existsByEmail("jungi@email.com"));
+        then(javaMailSender).should().send(any(SimpleMailMessage.class));
+    }
+
+    // 메일 메시지 까지 보다는
+    // Mokito BDDAssertion.then에 있는 javaMailSender가
 }

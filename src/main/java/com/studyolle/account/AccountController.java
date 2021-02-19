@@ -1,6 +1,9 @@
 package com.studyolle.account;
 
+import com.studyolle.domain.Account;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -18,6 +21,7 @@ import javax.validation.Valid;
 public class AccountController {
 
     private final SignUpFormValidator signUpFormValidator;
+    private final AccountService accountService;
 
     @InitBinder("signUpForm")
     public void initBinder(WebDataBinder webDataBinder) {
@@ -37,7 +41,6 @@ public class AccountController {
         */
     }
 
-
     @GetMapping("/sign-up")
     public String signUpForm(Model model) {
         model.addAttribute(new SignUpForm()); // 객체 attribute의 이름이 된다.
@@ -54,9 +57,10 @@ public class AccountController {
             // Binding Errors errors에 담기고 에러가 있다고 조건문에 걸려서 form으로 돌아감
             return "account/sign-up";
         }
-        
-        // TODO 회원 가입 처리
-        return "redirect:/";
 
+        accountService.processNewAccount(signUpForm);
+        return "redirect:/";
     }
+
+
 }
